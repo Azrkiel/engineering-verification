@@ -1,0 +1,18 @@
+# NPS 6 Sch 40 seamless process line.
+id: PL-2040
+name: Process line — NPS 6 Sch 40 seamless
+revision: A
+material: SA-106-B
+geometry:
+  type: straight_pipe
+  outside_diameter: 6.625 inch
+  nominal_wall: 0.280 inch
+  designation: NPS 6 Sch 40
+design_conditions:
+  design_pressure: 300 psi
+  design_temperature: 400 degF
+  corrosion_allowance: 0.0625 inch
+  quality_factor: 1.0          # seamless, Table A-1B
+  weld_strength_reduction: 1.0 # below the creep range
+  mill_tolerance: 0.125        # ASTM seamless 12.5%
+standards: [asme-b31-3]

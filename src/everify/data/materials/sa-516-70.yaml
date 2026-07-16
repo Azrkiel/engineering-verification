@@ -1,0 +1,26 @@
+id: SA-516-70
+name: ASME SA-516 Grade 70 carbon steel plate
+category: pressure
+description: >
+  Carbon steel plate for moderate- and lower-temperature pressure vessel service.
+yield_strength: 38 ksi
+ultimate_strength: 70 ksi
+allowable_stress:
+  basis: >
+    Maximum allowable stress S in the style of ASME BPVC Section II, Part D —
+    EXAMPLE VALUES from public references, not the Code tables.
+  points:
+    - temperature: -20 degF
+      value: 20.0 ksi
+    - temperature: 500 degF
+      value: 20.0 ksi
+    - temperature: 600 degF
+      value: 19.4 ksi
+    - temperature: 650 degF
+      value: 18.8 ksi
+provenance:
+  source: >
+    Example values compiled from publicly available engineering references.
+    ASME Section II-D tables are copyrighted and are not reproduced here.
+  requires_verification: true
+  verified_by_user: false

@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "everify"
+version = "0.1.0"
+description = "Standards-based engineering verification with cryptographically verifiable certificates (ASME BPVC VIII-1, ASME B31.3, FAA 14 CFR Part 25)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "everify contributors" }]
+keywords = [
+  "engineering",
+  "verification",
+  "ASME",
+  "B31.3",
+  "pressure-vessel",
+  "FAA",
+  "14-CFR",
+  "certificate",
+]
+dependencies = [
+  "pydantic>=2.7",
+  "pint>=0.23",
+  "cryptography>=42",
+  "typer>=0.12",
+  "rich>=13.7",
+  "jinja2>=3.1",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+everify = "everify.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+everify = ["data/materials/*.yaml", "certificates/templates/*.j2"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

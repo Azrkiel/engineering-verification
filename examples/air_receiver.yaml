@@ -1,0 +1,20 @@
+# Vertical air receiver — cylindrical shell course.
+# Companion head: air_receiver_head.yaml. Run:
+#   everify check examples/air_receiver.yaml
+id: AR-1001-SHELL
+name: Air receiver — cylindrical shell
+description: 48 in ID vertical air receiver, shell course, spot-radiographed Category A joints.
+revision: B
+material: SA-516-70
+geometry:
+  type: cylindrical_shell
+  inside_diameter: 48 inch
+  nominal_thickness: 0.500 inch
+design_conditions:
+  design_pressure: 250 psi
+  design_temperature: 500 degF
+  corrosion_allowance: 0.125 inch
+  joint_efficiency: 0.85   # UW-12, spot radiography
+standards: [asme-viii-div1]
+notes:
+  - Static head neglected; verify against UG-21 for the liquid-full condition if applicable.

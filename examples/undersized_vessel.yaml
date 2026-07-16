@@ -1,0 +1,15 @@
+# Deliberately deficient shell — demonstrates FAIL output and a failing certificate.
+id: DEMO-FAIL-01
+name: Undersized demonstration shell
+revision: A
+material: SA-516-70
+geometry:
+  type: cylindrical_shell
+  inside_diameter: 60 inch
+  nominal_thickness: 0.3125 inch
+design_conditions:
+  design_pressure: 250 psi
+  design_temperature: 300 degF
+  corrosion_allowance: 0.0625 inch
+  joint_efficiency: 0.85
+standards: [asme-viii-div1]

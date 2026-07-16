@@ -1,0 +1,19 @@
+id: 7075-T6-sheet
+name: Aluminum 7075-T6 sheet
+category: aerospace
+description: >
+  High-strength 7075-T6 aluminum sheet, common in fittings, spar caps, and stiffeners.
+yield_strength: 69 ksi
+ultimate_strength: 78 ksi
+design_values:
+  Ftu: 78 ksi
+  Fty: 69 ksi
+  basis: B
+  source: >
+    EXAMPLE values consistent with widely published handbook data for 7075-T6 sheet.
+    For certification use, take design values from MMPDS (or another approved source)
+    for the exact specification, form, and thickness.
+provenance:
+  source: Example values from publicly available engineering references.
+  requires_verification: true
+  verified_by_user: false
