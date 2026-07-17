@@ -109,3 +109,30 @@ def test_wrong_pinned_key_rejected(tmp_path, cert, tmp_path_factory):
     out = verify_certificate(_write(tmp_path, cert), pinned_pubkey=other / "everify_org.pub")
     assert out.issuer_key_pinned is False
     assert not out.ok
+
+
+def test_file_formatting_and_key_order_independence(tmp_path, keys, cert):
+    # Signature covers the canonical form, so key order, indentation, and
+    # ASCII escaping of the on-disk file must not matter.
+    reordered = dict(reversed(list(cert.items())))
+    path = tmp_path / "reordered.cert.json"
+    path.write_text(json.dumps(reordered, indent=4, ensure_ascii=True))
+    out = verify_certificate(path, pinned_pubkey=keys / "everify_org.pub")
+    assert out.ok
+
+
+def test_unknown_signature_algorithm_rejected(tmp_path, cert):
+    cert["signature"]["algorithm"] = "none"
+    out = verify_certificate(_write(tmp_path, cert))
+    assert not out.ok
+    assert any("unsupported signature algorithm" in e for e in out.errors)
+
+
+def test_fingerprint_pinning(tmp_path, cert):
+    fp = cert["issuer"]["key_fingerprint"]
+    ok = verify_certificate(_write(tmp_path, cert), pinned_fingerprint=fp[:20].upper())
+    assert ok.issuer_key_pinned is True and ok.ok
+    bad = verify_certificate(_write(tmp_path, cert), pinned_fingerprint="deadbeef" * 4)
+    assert bad.issuer_key_pinned is False and not bad.ok
+    malformed = verify_certificate(_write(tmp_path, cert), pinned_fingerprint="xyz")
+    assert malformed.issuer_key_pinned is False and not malformed.ok

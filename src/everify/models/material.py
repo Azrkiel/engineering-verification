@@ -45,6 +45,11 @@ class AllowableStress(EverifyModel):
                 raise ValueError("allowable_stress.points contains duplicate temperatures")
         return self
 
+    def clamped_below(self, temperature: Quantity) -> bool:
+        """True when the temperature is below the first tabulated point (the
+        first value is then used; MDMT/impact rules are out of scope)."""
+        return kelvin(temperature) < kelvin(self.points[0].temperature) - 1e-9
+
     def at(self, temperature: Quantity) -> Quantity:
         """Linear interpolation in temperature.
 

@@ -79,6 +79,14 @@ class FarPart25(StandardModule):
         return bool(part.load_cases)
 
     def run(self, part: Part) -> list[CheckResult]:
+        if not self.applicable(part):
+            return [CheckResult(
+                check_id=f"{self.id}.not_applicable",
+                title=self.title,
+                clause=self.clause("§ 25.1", "Applicability"),
+                disposition=Disposition.NOT_APPLICABLE,
+                message="Part defines no load_cases; no Part 25 margin checks apply.",
+            )]
         mat = part.material
         if not isinstance(mat, Material):
             return [self._error("material reference was not resolved to a material record")]
@@ -89,8 +97,13 @@ class FarPart25(StandardModule):
                 "margin checks; supply design_values with a declared statistical basis (25.613)"
             )]
         results: list[CheckResult] = []
+        used: dict[str, int] = {}
         for case in part.load_cases:
-            results.extend(self._case_checks(case, mat))
+            base = _slug(case.name)
+            n = used.get(base, 0)
+            used[base] = n + 1
+            slug = base if n == 0 else f"{base}-{n + 1}"  # distinct names can share a slug
+            results.extend(self._case_checks(case, mat, slug))
         return results
 
     def _error(self, message: str) -> CheckResult:
@@ -102,9 +115,8 @@ class FarPart25(StandardModule):
             message=message,
         )
 
-    def _case_checks(self, case: LoadCase, mat: Material) -> list[CheckResult]:
+    def _case_checks(self, case: LoadCase, mat: Material, slug: str) -> list[CheckResult]:
         dv = mat.design_values
-        slug = _slug(case.name)
         ff = case.fitting_factor if case.is_fitting else 1.0
         fs = case.factor_of_safety
         f = case.limit_stress

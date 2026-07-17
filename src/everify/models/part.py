@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Mapping
 
 import yaml
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from everify.models.base import EverifyModel
 from everify.models.geometry import Geometry
@@ -33,6 +33,17 @@ class Part(EverifyModel):
         min_length=1, description="Standard module ids to verify against, e.g. ['asme-viii-div1']"
     )
     notes: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def _unique_load_case_names(self) -> "Part":
+        names = [c.name for c in self.load_cases]
+        dupes = {n for n in names if names.count(n) > 1}
+        if dupes:
+            raise ValueError(
+                f"load_cases names must be unique (duplicated: {', '.join(sorted(dupes))}); "
+                "check identifiers and certificate recompute comparisons are keyed by case name"
+            )
+        return self
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "Part":

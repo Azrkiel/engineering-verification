@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from everify.engine.results import CheckResult, ComputedValue, Disposition
+from everify.engine.results import CheckResult, ComputedValue, Disposition, capacity_margin
 from everify.models.geometry import StraightPipe
 from everify.models.material import AllowableStressRangeError, Material
 from everify.models.part import Part
@@ -52,6 +52,14 @@ class AsmeB313(StandardModule):
         return isinstance(part.geometry, StraightPipe)
 
     def run(self, part: Part) -> list[CheckResult]:
+        if not self.applicable(part):
+            return [CheckResult(
+                check_id=f"{self.id}.not_applicable",
+                title=self.title,
+                clause=self.clause("300", "Scope"),
+                disposition=Disposition.NOT_APPLICABLE,
+                message="Part geometry is not straight pipe; no B31.3 checks apply.",
+            )]
         geom = part.geometry
         dc = part.design_conditions
         if dc is None:
@@ -86,7 +94,15 @@ class AsmeB313(StandardModule):
             Y=Y, c=dc.corrosion_allowance + dc.mechanical_allowance, mill=dc.mill_tolerance,
             p_units=f"{dc.design_pressure.units:~}", l_units=f"{geom.nominal_wall.units:~}",
         )
-        return self._straight_pipe(ctx, geom, y_note)
+        extra_assumptions: list[str] = []
+        if mat.allowable_stress.clamped_below(dc.design_temperature):
+            first = mat.allowable_stress.points[0].temperature
+            extra_assumptions.append(
+                f"Design temperature {dc.design_temperature:~} is below the first tabulated "
+                f"allowable-stress point ({first:~}); S is taken at that first point. "
+                "Low-temperature toughness requirements (323.2.2) are NOT evaluated."
+            )
+        return self._straight_pipe(ctx, geom, y_note, extra_assumptions)
 
     def _error(self, message: str) -> CheckResult:
         return CheckResult(
@@ -97,7 +113,9 @@ class AsmeB313(StandardModule):
             message=message,
         )
 
-    def _straight_pipe(self, ctx: _Ctx, geom: StraightPipe, y_note: str) -> list[CheckResult]:
+    def _straight_pipe(
+        self, ctx: _Ctx, geom: StraightPipe, y_note: str, extra_assumptions: list[str]
+    ) -> list[CheckResult]:
         D = geom.outside_diameter
         t_nom = geom.nominal_wall
 
@@ -113,6 +131,7 @@ class AsmeB313(StandardModule):
             f"c = corrosion + mechanical allowances = {fmt(ctx.c, ctx.l_units)} (304.1.1)",
             f"Mill under-tolerance {ctx.mill * 100:g}% applied to select nominal wall "
             "(12.5% is the ASTM seamless default).",
+            *extra_assumptions,
         ]
 
         computed = [
@@ -139,7 +158,8 @@ class AsmeB313(StandardModule):
                         "thick-wall design per 304.1.2(b) / K-2 required.",
             )]
 
-        margin = float((t_nom / t_nom_req).to("dimensionless").magnitude) - 1.0
+        margin = capacity_margin(t_nom, t_nom_req)
+        passed = margin is None or margin >= 0
         substitution = (
             f"t = ({fmt(ctx.P, ctx.p_units)} × {fmt(D, ctx.l_units)}) / "
             f"(2 × ({fmt(ctx.S, ctx.p_units)} × {ctx.E:g} × {ctx.W:g} + "
@@ -151,14 +171,14 @@ class AsmeB313(StandardModule):
             check_id="b313.304_1_2",
             title=f"Straight pipe — pressure design wall thickness{f' ({geom.designation})' if geom.designation else ''}",
             clause=self.clause("304.1.2", "Straight pipe under internal pressure, eq. (3a)"),
-            disposition=Disposition.PASS if margin >= 0 else Disposition.FAIL,
+            disposition=Disposition.PASS if passed else Disposition.FAIL,
             formula="t = P·D / [2·(S·E·W + P·Y)];  t_m = t + c;  t_nom ≥ t_m / (1 − mill_tol)",
             substitution=substitution,
             computed=computed,
             criterion="selected nominal wall ≥ required nominal wall",
             margin=margin,
             assumptions=assumptions,
-            message=None if margin >= 0 else (
+            message=None if passed else (
                 f"Selected nominal wall {fmt(t_nom, ctx.l_units)} is below the required "
                 f"{fmt(t_nom_req, ctx.l_units)}."
             ),

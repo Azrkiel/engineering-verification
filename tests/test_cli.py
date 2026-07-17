@@ -78,6 +78,43 @@ def test_full_certificate_flow(tmp_path):
     assert result.exit_code == 1
 
 
+def test_invalid_part_field_gives_clean_error(tmp_path):
+    bad = tmp_path / "bad.yaml"
+    bad.write_text(
+        "id: X\nname: bad part\nmaterial: SA-516-70\n"
+        "standards: [asme-viii-div1]\nbogus_field: 1\n"
+    )
+    result = runner.invoke(app, ["check", str(bad)])
+    assert result.exit_code == 2
+    assert "Traceback" not in result.output
+    assert "bogus_field" in result.output
+
+
+def test_missing_keys_gives_clean_error(tmp_path):
+    result = runner.invoke(app, [
+        "certify", str(EXAMPLES / "air_receiver.yaml"),
+        "--keys", str(tmp_path / "nokeys"), "--out", str(tmp_path / "c.json"),
+    ])
+    assert result.exit_code == 2
+    assert "Traceback" not in result.output
+    assert "everify keygen" in result.output
+
+
+def test_verify_with_fingerprint_pin(tmp_path):
+    keys = tmp_path / "keys"
+    runner.invoke(app, ["keygen", "--org", "FP Org", "--out", str(keys)])
+    cert_path = tmp_path / "c.cert.json"
+    runner.invoke(app, [
+        "certify", str(EXAMPLES / "air_receiver.yaml"),
+        "--keys", str(keys), "--out", str(cert_path),
+    ])
+    fp = json.loads((keys / "everify_org.json").read_text())["key_fingerprint"]
+    good = runner.invoke(app, ["verify", str(cert_path), "--fingerprint", fp[:24]])
+    assert good.exit_code == 0, good.output
+    bad = runner.invoke(app, ["verify", str(cert_path), "--fingerprint", "deadbeef" * 4])
+    assert bad.exit_code == 1
+
+
 def test_render_from_json(tmp_path):
     keys = tmp_path / "keys"
     runner.invoke(app, ["keygen", "--org", "CLI Test Org", "--out", str(keys)])

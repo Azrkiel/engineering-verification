@@ -8,6 +8,18 @@ from pydantic import Field, computed_field
 
 from everify.models.base import EverifyModel
 from everify.models.part import Part
+from everify.units import Quantity
+
+
+def capacity_margin(capacity: Quantity, demand: Quantity) -> float | None:
+    """capacity/demand − 1, or None when nothing is demanded (zero demand).
+
+    A None margin means the check is trivially satisfied — never a division
+    by zero and never an unserializable infinity in the certificate.
+    """
+    if demand.magnitude == 0:
+        return None
+    return float((capacity / demand).to("dimensionless").magnitude) - 1.0
 
 
 class Disposition(str, Enum):

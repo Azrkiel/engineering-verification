@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -58,6 +59,7 @@ def _margins_close(a: float | None, b: float | None) -> bool:
 def verify_certificate(
     path: str | Path,
     pinned_pubkey: str | Path | None = None,
+    pinned_fingerprint: str | None = None,
     recompute: bool = True,
 ) -> CertificateVerification:
     out = CertificateVerification()
@@ -75,6 +77,12 @@ def verify_certificate(
     if not isinstance(signature, dict) or "value" not in signature:
         out.errors.append("certificate has no signature block")
         return out
+    if signature.get("algorithm") != "Ed25519":
+        # Refuse unknown/none algorithms outright — no downgrade path.
+        out.errors.append(
+            f"unsupported signature algorithm {signature.get('algorithm')!r}; expected 'Ed25519'"
+        )
+        return out
     body = {k: v for k, v in cert.items() if k != "signature"}
     try:
         pub_raw = unb64(cert["issuer"]["public_key"])
@@ -91,14 +99,28 @@ def verify_certificate(
         out.errors.append("embedded key fingerprint does not match the embedded public key")
         out.signature_valid = False
 
+    pins: list[bool] = []
     if pinned_pubkey is not None:
         try:
-            out.issuer_key_pinned = load_public_key_raw(pinned_pubkey) == pub_raw
+            match = load_public_key_raw(pinned_pubkey) == pub_raw
         except Exception as exc:
-            out.issuer_key_pinned = False
+            match = False
             out.errors.append(f"cannot load pinned public key: {exc}")
-        if out.issuer_key_pinned is False:
+        if not match:
             out.errors.append("issuer key does not match the pinned (trusted) public key")
+        pins.append(match)
+    if pinned_fingerprint is not None:
+        fp = pinned_fingerprint.strip().lower().replace(":", "").replace(" ", "")
+        actual = sha256_hex(pub_raw)
+        if not re.fullmatch(r"[0-9a-f]{16,64}", fp):
+            out.errors.append("pinned fingerprint must be 16–64 hex characters")
+            pins.append(False)
+        elif actual.startswith(fp):
+            pins.append(True)
+        else:
+            out.errors.append("issuer key fingerprint does not match the pinned fingerprint")
+            pins.append(False)
+    out.issuer_key_pinned = all(pins) if pins else None
 
     part_doc = cert.get("subject", {}).get("part")
     out.inputs_hash_valid = (

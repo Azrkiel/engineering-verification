@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass
 
-from everify.engine.results import CheckResult, ComputedValue, Disposition
+from everify.engine.results import CheckResult, ComputedValue, Disposition, capacity_margin
 from everify.models.geometry import (
     CylindricalShell,
     EllipsoidalHead,
@@ -54,6 +54,7 @@ class _Ctx:
     material: Material
     p_units: str
     l_units: str
+    assumptions: list[str]
 
 
 class AsmeViiiDiv1(StandardModule):
@@ -79,6 +80,14 @@ class AsmeViiiDiv1(StandardModule):
         return isinstance(part.geometry, self.SUPPORTED)
 
     def run(self, part: Part) -> list[CheckResult]:
+        if not self.applicable(part):
+            return [CheckResult(
+                check_id=f"{self.id}.not_applicable",
+                title=self.title,
+                clause=self.clause("U-1", "Scope"),
+                disposition=Disposition.NOT_APPLICABLE,
+                message="Part geometry is not a pressure component covered by this module.",
+            )]
         err = self._context_errors(part)
         if err:
             return err
@@ -125,6 +134,14 @@ class AsmeViiiDiv1(StandardModule):
         dc = part.design_conditions
         mat = part.material
         S = mat.allowable_stress.at(dc.design_temperature)
+        assumptions = [CORRODED_ASSUMPTION, STATIC_HEAD_ASSUMPTION]
+        if mat.allowable_stress.clamped_below(dc.design_temperature):
+            first = mat.allowable_stress.points[0].temperature
+            assumptions.append(
+                f"Design temperature {dc.design_temperature:~} is below the first tabulated "
+                f"allowable-stress point ({first:~}); S is taken at that first point. "
+                "Low-temperature (MDMT/impact, UCS-66) requirements are NOT evaluated."
+            )
         return _Ctx(
             P=dc.design_pressure,
             S=S,
@@ -133,6 +150,7 @@ class AsmeViiiDiv1(StandardModule):
             material=mat,
             p_units=f"{dc.design_pressure.units:~}",
             l_units=f"{part.geometry.nominal_thickness.units:~}",
+            assumptions=assumptions,
         )
 
     def _error(self, message: str) -> CheckResult:
@@ -383,7 +401,7 @@ class AsmeViiiDiv1(StandardModule):
         valid: bool, validity_note: str, substitution: str,
         extra_warnings: list[str] | None = None,
     ) -> CheckResult:
-        assumptions = [CORRODED_ASSUMPTION, STATIC_HEAD_ASSUMPTION]
+        assumptions = list(ctx.assumptions)
         warnings = list(extra_warnings or [])
         computed = [
             ComputedValue(symbol=char_dim[0], description=char_dim[1], value=f"{char_dim[2]:~}"),
@@ -402,24 +420,30 @@ class AsmeViiiDiv1(StandardModule):
                         "evaluate under the referenced alternative rules.",
             )
         computed.insert(0, ComputedValue(symbol="t_required", description="minimum required thickness", value=f"{t_req:~}"))
-        margin = float((t_avail / t_req).to("dimensionless").magnitude) - 1.0
+        margin = capacity_margin(t_avail, t_req)
+        passed = margin is None or margin >= 0
+        if margin is None:
+            message = "No thickness is required for pressure at zero design pressure; other checks still apply."
+        elif passed:
+            message = None
+        else:
+            message = (f"Required thickness {fmt(t_req, ctx.l_units)} exceeds available "
+                       f"thickness {fmt(t_avail, ctx.l_units)}.")
         return CheckResult(
             check_id=check_id, title=title, clause=clause,
-            disposition=Disposition.PASS if margin >= 0 else Disposition.FAIL,
+            disposition=Disposition.PASS if passed else Disposition.FAIL,
             formula=formula, substitution=substitution, computed=computed,
             criterion="t_available ≥ t_required",
             margin=margin, assumptions=assumptions, warnings=warnings,
-            message=None if margin >= 0 else (
-                f"Required thickness {fmt(t_req, ctx.l_units)} exceeds available "
-                f"thickness {fmt(t_avail, ctx.l_units)}."
-            ),
+            message=message,
         )
 
     def _mawp_result(
         self, ctx: _Ctx, mawp: Quantity, *, formula: str, substitution: str,
         extra: list[ComputedValue],
     ) -> CheckResult:
-        margin = float((mawp / ctx.P).to("dimensionless").magnitude) - 1.0
+        margin = capacity_margin(mawp, ctx.P)
+        passed = margin is None or margin >= 0
         return CheckResult(
             check_id="viii1.mawp",
             title="Maximum allowable working pressure at available thickness",
@@ -427,15 +451,15 @@ class AsmeViiiDiv1(StandardModule):
                 "UG-98 / Appendix 3-2", "Maximum allowable working pressure",
                 note="MAWP computed at the corroded available thickness, new-and-cold static head neglected.",
             ),
-            disposition=Disposition.PASS if margin >= 0 else Disposition.FAIL,
+            disposition=Disposition.PASS if passed else Disposition.FAIL,
             formula=formula, substitution=substitution,
             computed=[ComputedValue(symbol="MAWP", description="maximum allowable working pressure", value=f"{mawp:~}"),
                       ComputedValue(symbol="P", description="internal design gage pressure", value=f"{ctx.P:~}"),
                       *extra],
             criterion="MAWP ≥ P (design pressure)",
             margin=margin,
-            assumptions=[CORRODED_ASSUMPTION, STATIC_HEAD_ASSUMPTION],
-            message=None if margin >= 0 else "Design pressure exceeds the MAWP of this component.",
+            assumptions=list(ctx.assumptions),
+            message=None if passed else "Design pressure exceeds the MAWP of this component.",
         )
 
     def _ug16b(self, ctx: _Ctx, t_avail: Quantity) -> CheckResult:

@@ -7,6 +7,8 @@ from pathlib import Path
 from typing import Optional
 
 import typer
+import yaml
+from pydantic import ValidationError
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
@@ -22,8 +24,19 @@ from everify.certificates import (
 from everify.engine.results import Disposition, VerificationRun
 from everify.engine.verifier import verify_part
 from everify.materials import load_material_library
-from everify.models.part import Part
-from everify.standards import list_modules
+from everify.models.part import Part, UnknownMaterialError
+from everify.standards import UnknownStandardError, list_modules
+from everify.units import QuantityParseError
+
+USER_ERRORS = (
+    ValidationError,
+    UnknownMaterialError,
+    UnknownStandardError,
+    QuantityParseError,
+    yaml.YAMLError,
+    ValueError,
+    OSError,
+)
 
 app = typer.Typer(
     no_args_is_help=True,
@@ -46,6 +59,20 @@ _STYLE = {
 
 def _fail_exit(run: VerificationRun) -> int:
     return 1 if run.overall_disposition in (Disposition.FAIL, Disposition.ERROR) else 0
+
+
+def _die(message: str) -> None:
+    console.print(f"[bold red]error:[/bold red] {message}")
+    raise typer.Exit(2)
+
+
+def _load_run(part_file: Path, standard: list[str], materials_dir: list[Path]) -> VerificationRun:
+    try:
+        part = _load_part(part_file, standard)
+        return verify_part(part, load_material_library(materials_dir))
+    except USER_ERRORS as exc:
+        _die(str(exc))
+        raise AssertionError("unreachable")
 
 
 def _load_part(part_file: Path, standard: list[str] | None) -> Part:
@@ -150,8 +177,7 @@ def check(
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
     """Verify a part definition against its standards. Exit 1 on FAIL/ERROR."""
-    part = _load_part(part_file, standard)
-    run = verify_part(part, load_material_library(materials_dir))
+    run = _load_run(part_file, standard, materials_dir)
     if json_out:
         print(json.dumps(run.model_dump(mode="json"), indent=2, ensure_ascii=False))
     else:
@@ -184,10 +210,16 @@ def certify(
     materials_dir: list[Path] = typer.Option([], "--materials"),
 ) -> None:
     """Run verification and issue a signed verification certificate."""
-    part = _load_part(part_file, standard)
-    run = verify_part(part, load_material_library(materials_dir))
+    run = _load_run(part_file, standard, materials_dir)
     _print_run(run, verbose=False)
-    cert = build_certificate(run, keys)
+    try:
+        cert = build_certificate(run, keys)
+    except FileNotFoundError:
+        _die(
+            f"signing keys not found in {keys}/ — generate them once with: "
+            f"everify keygen --org \"Your Organization\" --out {keys}"
+        )
+        raise AssertionError("unreachable")
     out = out or part_file.with_suffix(".cert.json")
     out.write_text(json.dumps(cert, indent=2, ensure_ascii=False) + "\n")
     console.print(f"Certificate [cyan]{certificate_id(cert)}[/cyan] written to {out}")
@@ -213,12 +245,19 @@ def verify(
     pubkey: Optional[Path] = typer.Option(
         None, "--pubkey", help="Trusted issuer public key (PEM) to pin against"
     ),
+    fingerprint: Optional[str] = typer.Option(
+        None, "--fingerprint",
+        help="Trusted issuer key fingerprint (≥16 hex chars of the SHA-256) to pin against",
+    ),
     no_recompute: bool = typer.Option(
         False, "--no-recompute", help="Skip re-running the checks from embedded inputs"
     ),
 ) -> None:
     """Verify a certificate offline: signature, input digest, and full recomputation."""
-    outcome = verify_certificate(cert_file, pinned_pubkey=pubkey, recompute=not no_recompute)
+    outcome = verify_certificate(
+        cert_file, pinned_pubkey=pubkey, pinned_fingerprint=fingerprint,
+        recompute=not no_recompute,
+    )
 
     def yn(v: bool | None, true_txt: str, false_txt: str, none_txt: str) -> str:
         if v is None:

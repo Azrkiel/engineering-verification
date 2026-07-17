@@ -96,3 +96,23 @@ def test_material_without_design_values_is_error(library):
     part = fitting_part(material="SA-516-70")
     run = verify_part(part, library)
     assert run.overall_disposition is Disposition.ERROR
+
+
+def test_duplicate_case_names_rejected():
+    with pytest.raises(Exception, match="unique"):
+        fitting_part(load_cases=[
+            {"name": "gust", "limit_stress": "30 ksi"},
+            {"name": "gust", "limit_stress": "50 ksi"},
+        ])
+
+
+def test_distinct_names_with_same_slug_get_unique_check_ids(library):
+    part = fitting_part(load_cases=[
+        {"name": "Case A", "limit_stress": "20 ksi"},
+        {"name": "case a", "limit_stress": "25 ksi"},
+    ])
+    run = verify_part(part, library)
+    ids = [r.check_id for r in run.results]
+    assert len(ids) == len(set(ids))
+    assert "far25.ultimate.case-a" in ids
+    assert "far25.ultimate.case-a-2" in ids
