@@ -1,0 +1,43 @@
+id: far25.domain.single-load-path-requires-a-basis
+title: Single load path structure must reject B-basis design values
+standard: far-25
+category: domain-guard
+reference: 14 CFR 25.613(b)(1) and 25.613(b)(2)
+rationale: >
+  14 CFR 25.613(b)(1) requires 99 percent probability with 95 percent confidence (A-basis)
+  where applied loads are eventually distributed through a single member whose failure
+  would result in loss of structural integrity. Only redundant structure may use 90/95
+  (B-basis) values under 25.613(b)(2). Accepting B-basis values on a single load path is a
+  silent airworthiness violation that no arithmetic check would catch, so the design-value
+  basis must be verified against the declared load path independently of the margins.
+  The margins themselves are comfortably positive here, which is exactly the point: the
+  case must fail on basis alone.
+materials:
+  CONF-AL-B-BASIS:
+    name: Conformance aluminum with B-basis design values
+    category: aerospace
+    design_values:
+      Ftu: 78 ksi
+      Fty: 69 ksi
+      basis: B
+      source: Synthetic conformance values; not drawn from MMPDS or any approved source.
+    provenance:
+      source: Synthetic conformance material.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-FAR25-010
+  name: Conformance single load path lug
+  material: CONF-AL-B-BASIS
+  load_cases:
+    - name: limit tension
+      limit_stress: 20 ksi
+      load_path: single
+  standards: [far-25]
+expect_overall: FAIL
+expect:
+  - check_id: far25.basis.limit-tension
+    disposition: FAIL
+    message_contains: A-basis
+  - check_id: far25.ultimate.limit-tension
+    disposition: PASS

@@ -1,0 +1,20 @@
+# Machined wing attachment fitting — static strength margins per 14 CFR Part 25.
+# Limit stresses come from the governing FEA; everify checks factor application
+# and margins, not the stress analysis itself.
+id: WF-7075-014
+name: Wing attachment fitting
+revision: C
+material: 7075-T6-sheet
+load_cases:
+  - name: 2.5g symmetric pull-up
+    limit_stress: 32 ksi
+    load_path: redundant
+    is_fitting: true          # 25.625 fitting factor 1.15
+  - name: -1.0g pushover
+    limit_stress: 14 ksi
+    load_path: redundant
+    is_fitting: true
+standards: [far-25]
+notes:
+  - Design values must be replaced with MMPDS values for the actual form/thickness
+    before use in a certification program.

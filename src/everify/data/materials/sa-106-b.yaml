@@ -1,0 +1,23 @@
+id: SA-106-B
+name: ASME SA-106 Grade B seamless carbon steel pipe
+category: pressure
+description: >
+  Seamless carbon steel pipe for high-temperature service.
+yield_strength: 35 ksi
+ultimate_strength: 60 ksi
+allowable_stress:
+  basis: >
+    Allowable stress S in the style of ASME B31.3 Table A-1 / BPVC Section II-D —
+    EXAMPLE VALUES from public references, not the Code tables. Table intentionally
+    ends at 500 degF; supply verified data for higher design temperatures.
+  points:
+    - temperature: -20 degF
+      value: 17.1 ksi
+    - temperature: 500 degF
+      value: 17.1 ksi
+provenance:
+  source: >
+    Example values compiled from publicly available engineering references.
+    ASME allowable-stress tables are copyrighted and are not reproduced here.
+  requires_verification: true
+  verified_by_user: false

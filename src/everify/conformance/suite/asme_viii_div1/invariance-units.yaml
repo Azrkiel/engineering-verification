@@ -1,0 +1,57 @@
+id: viii1.invariance.units
+title: Margins are invariant under unit system
+standard: asme-viii-div1
+category: invariance
+rationale: >
+  Margins are dimensionless ratios, so the same physical vessel expressed in SI must
+  produce identical dispositions and margins to the US customary statement of it.
+  A unit-handling defect anywhere in the chain breaks this immediately.
+  48 in = 1219.2 mm;  0.5 in = 12.7 mm;  0.125 in = 3.175 mm;
+  250 psi = 1.72368932329209 MPa (stated to full double precision so the comparison
+  tests the engine rather than the precision of the conversion);  500 degF = 260 degC.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-010
+  name: Conformance shell, US customary
+  material: CONF-CS-20KSI
+  geometry:
+    type: cylindrical_shell
+    inside_diameter: 48 inch
+    nominal_thickness: 0.500 inch
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 500 degF
+    corrosion_allowance: 0.125 inch
+    joint_efficiency: 0.85
+  standards: [asme-viii-div1]
+agrees_with:
+  - description: same vessel stated in SI units
+    margin_tolerance: 1.0e-9
+    part:
+      id: CONF-VIII1-010-SI
+      name: Conformance shell, SI
+      material: CONF-CS-20KSI
+      geometry:
+        type: cylindrical_shell
+        inside_diameter: 1219.2 mm
+        nominal_thickness: 12.7 mm
+      design_conditions:
+        design_pressure: 1.72368932329209 MPa
+        design_temperature: 260 degC
+        corrosion_allowance: 3.175 mm
+        joint_efficiency: 0.85
+      standards: [asme-viii-div1]

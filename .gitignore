@@ -1,0 +1,18 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+
+# Signing keys — never commit private keys
+keys/
+*.key
+
+# Generated certificate artifacts
+*.cert.json
+*.cert.html

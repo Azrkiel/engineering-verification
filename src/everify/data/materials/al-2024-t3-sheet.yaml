@@ -1,0 +1,19 @@
+id: 2024-T3-sheet
+name: Aluminum 2024-T3 sheet
+category: aerospace
+description: >
+  Clad/bare 2024-T3 aluminum sheet, a common transport airframe skin and web material.
+yield_strength: 47 ksi
+ultimate_strength: 64 ksi
+design_values:
+  Ftu: 64 ksi
+  Fty: 47 ksi
+  basis: B
+  source: >
+    EXAMPLE values consistent with widely published handbook data for 2024-T3 sheet.
+    For certification use, take design values from MMPDS (or another approved source)
+    for the exact specification, form, and thickness.
+provenance:
+  source: Example values from publicly available engineering references.
+  requires_verification: true
+  verified_by_user: false

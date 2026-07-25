@@ -1,0 +1,57 @@
+id: viii1.invariance.geometric-scaling
+title: Margins are invariant under geometric scaling
+standard: asme-viii-div1
+category: invariance
+rationale: >
+  The thin-shell pressure equations are homogeneous of degree one in length, so scaling
+  every length (diameter, thickness, corrosion allowance) by the same factor must leave
+  the dimensionless pressure margins unchanged. UG-16(b) is excluded from the comparison
+  because it asserts an absolute minimum thickness, which is deliberately not scale-free.
+  Scale factor 3.7:  48 -> 177.6 in;  0.5 -> 1.85 in;  0.125 -> 0.4625 in.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-011
+  name: Conformance shell, base scale
+  material: CONF-CS-20KSI
+  geometry:
+    type: cylindrical_shell
+    inside_diameter: 48 inch
+    nominal_thickness: 0.500 inch
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 500 degF
+    corrosion_allowance: 0.125 inch
+    joint_efficiency: 0.85
+  standards: [asme-viii-div1]
+agrees_with:
+  - description: all lengths scaled by 3.7
+    margin_tolerance: 1.0e-9
+    only_checks: [viii1.ug27c1, viii1.ug27c2, viii1.mawp]
+    part:
+      id: CONF-VIII1-011-SCALED
+      name: Conformance shell, scaled 3.7x
+      material: CONF-CS-20KSI
+      geometry:
+        type: cylindrical_shell
+        inside_diameter: 177.6 inch
+        nominal_thickness: 1.85 inch
+      design_conditions:
+        design_pressure: 250 psi
+        design_temperature: 500 degF
+        corrosion_allowance: 0.4625 inch
+        joint_efficiency: 0.85
+      standards: [asme-viii-div1]

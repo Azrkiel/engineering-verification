@@ -1,0 +1,53 @@
+id: b313.golden.straight-pipe
+title: Straight pipe under internal pressure — wall thickness and capacity
+standard: asme-b31-3
+category: golden
+reference: ASME B31.3, para. 304.1.2 eq. (3a) and para. 304.1.1
+rationale: >
+  Hand calculation for NPS 6 Sch 40 seamless, Y = 0.4 below the creep range (Table 304.1.1).
+  t = P*D/(2*(S*E*W + P*Y)) = 300*6.625/(2*(17100*1*1 + 300*0.4))
+    = 1987.5/(2*17220) = 1987.5/34440 = 0.0577090592334 in.
+  t_m = t + c = 0.0577090592334 + 0.0625 = 0.1202090592334 in.
+  Required nominal wall with 12.5% mill under-tolerance:
+    t_nom_req = 0.1202090592334/0.875 = 0.1373817819811 in.
+  Selected 0.280 in  ->  margin = 0.280/0.1373817819811 - 1 = +1.0381159420290.
+  Capacity of the selected wall: t_eff = 0.280*0.875 - 0.0625 = 0.1825 in;
+    P_max = 2*0.1825*17100/(6.625 - 2*0.4*0.1825) = 6241.5/6.479 = 963.3431085044 psi.
+materials:
+  CONF-CS-17.1KSI:
+    name: Conformance seamless pipe steel, S = 17.1 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 17.1 ksi
+        - temperature: 500 degF
+          value: 17.1 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-B313-001
+  name: Conformance straight pipe
+  material: CONF-CS-17.1KSI
+  geometry:
+    type: straight_pipe
+    outside_diameter: 6.625 inch
+    nominal_wall: 0.280 inch
+    designation: NPS 6 Sch 40
+  design_conditions:
+    design_pressure: 300 psi
+    design_temperature: 400 degF
+    corrosion_allowance: 0.0625 inch
+    quality_factor: 1.0
+    weld_strength_reduction: 1.0
+    mill_tolerance: 0.125
+  standards: [asme-b31-3]
+expect_overall: PASS
+expect:
+  - check_id: b313.304_1_2
+    disposition: PASS
+    margin: 1.0381159420290
+    margin_tolerance: 1.0e-10

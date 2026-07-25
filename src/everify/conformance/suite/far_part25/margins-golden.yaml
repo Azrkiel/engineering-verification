@@ -1,0 +1,48 @@
+id: far25.golden.fitting-margins
+title: Ultimate and limit margins of safety with a fitting factor
+standard: far-25
+category: golden
+reference: 14 CFR 25.303, 25.305(a), 25.305(b), 25.625
+rationale: >
+  Hand calculation. 14 CFR 25.303 requires a factor of safety of 1.5 on limit load, and
+  25.625 requires a fitting factor of at least 1.15 on fittings. With Ftu = 78 ksi,
+  Fty = 69 ksi and a limit stress of 32 ksi:
+    MS_ult   = Ftu/(FF*FS*f) - 1 = 78/(1.15*1.5*32)  - 1 = 78/55.2 - 1 = +0.413043478.
+    MS_limit = Fty/(FF*f) - 1    = 69/(1.15*32)      - 1 = 69/36.8 - 1 = +0.875000000.
+  Both margins must be non-negative for the case to pass, and a redundant load path
+  permits B-basis design values under 25.613(b)(2).
+materials:
+  CONF-AL-78-69:
+    name: Conformance aluminum, Ftu 78 ksi / Fty 69 ksi
+    category: aerospace
+    design_values:
+      Ftu: 78 ksi
+      Fty: 69 ksi
+      basis: B
+      source: Synthetic conformance values; not drawn from MMPDS or any approved source.
+    provenance:
+      source: Synthetic conformance material.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-FAR25-001
+  name: Conformance fitting
+  material: CONF-AL-78-69
+  load_cases:
+    - name: 2.5g symmetric pull-up
+      limit_stress: 32 ksi
+      load_path: redundant
+      is_fitting: true
+  standards: [far-25]
+expect_overall: PASS
+expect:
+  - check_id: far25.ultimate.2-5g-symmetric-pull-up
+    disposition: PASS
+    margin: 0.413043478
+    margin_tolerance: 1.0e-8
+  - check_id: far25.limit.2-5g-symmetric-pull-up
+    disposition: PASS
+    margin: 0.875
+    margin_tolerance: 1.0e-9
+  - check_id: far25.basis.2-5g-symmetric-pull-up
+    disposition: PASS

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification Certificate {{ cert_id }} — {{ part.name }}</title>
+<style>
+  :root { --ink: #1a1d21; --muted: #5a626c; --line: #cdd3da; --accent: #17497a;
+          --pass: #1e7a3c; --fail: #b02a1f; --warn: #9a6b00; --info: #17497a; --na: #5a626c; }
+  * { box-sizing: border-box; }
+  body { font-family: Georgia, "Times New Roman", serif; color: var(--ink); margin: 0;
+         background: #f2f3f5; line-height: 1.45; }
+  .sheet { max-width: 54rem; margin: 1.5rem auto; background: #fff; padding: 3rem 3.5rem;
+           border: 1px solid var(--line); }
+  header { border-bottom: 3px double var(--accent); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+  h1 { font-size: 1.6rem; margin: 0 0 0.25rem; color: var(--accent); letter-spacing: 0.02em; }
+  h2 { font-size: 1.05rem; margin: 2rem 0 0.5rem; color: var(--accent);
+       text-transform: uppercase; letter-spacing: 0.08em; }
+  .meta { color: var(--muted); font-size: 0.9rem; }
+  .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; font-size: 0.85em; }
+  .badge { display: inline-block; padding: 0.15rem 0.7rem; border-radius: 3px; color: #fff;
+           font-family: sans-serif; font-weight: 700; font-size: 0.85rem; vertical-align: middle; }
+  .badge.pass { background: var(--pass); } .badge.fail { background: var(--fail); }
+  .badge.warn { background: var(--warn); } .badge.info { background: var(--info); }
+  .badge.na   { background: var(--na); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 0.5rem 0 1rem; }
+  th, td { border: 1px solid var(--line); padding: 0.4rem 0.6rem; text-align: left;
+           vertical-align: top; }
+  th { background: #eef1f4; font-family: sans-serif; font-size: 0.78rem;
+       text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+  .tablewrap { overflow-x: auto; }
+  .formula { background: #f6f7f9; border-left: 3px solid var(--accent); padding: 0.4rem 0.6rem;
+             margin: 0.3rem 0; }
+  .clause { color: var(--muted); font-size: 0.82rem; }
+  .quote { font-style: italic; color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0 0; }
+  .scope { border: 2px solid var(--accent); padding: 1rem 1.25rem; margin: 1.5rem 0;
+           font-size: 0.92rem; background: #f8fafc; }
+  .scope strong { color: var(--accent); }
+  .warnbox { border-left: 4px solid var(--warn); background: #fdf8ee; padding: 0.5rem 0.8rem;
+             margin: 0.4rem 0; font-size: 0.88rem; }
+  ul { margin: 0.3rem 0 0.6rem 1.2rem; padding: 0; }
+  li { margin-bottom: 0.2rem; }
+  .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 1rem; }
+  .sig-line { border-bottom: 1px solid var(--ink); height: 2.2rem; }
+  .sig-label { font-size: 0.78rem; color: var(--muted); font-family: sans-serif;
+               text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.2rem; }
+  .kv td:first-child { width: 30%; color: var(--muted); }
+  footer { margin-top: 2rem; padding-top: 0.8rem; border-top: 1px solid var(--line);
+           font-size: 0.78rem; color: var(--muted); }
+  .checkblock { border: 1px solid var(--line); border-radius: 4px; padding: 0.8rem 1rem;
+                margin: 0.8rem 0; page-break-inside: avoid; }
+  .checkhead { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .checkhead h3 { margin: 0; font-size: 1rem; }
+  @media print {
+    body { background: #fff; }
+    .sheet { border: none; margin: 0; max-width: none; padding: 0.5in 0.6in; }
+  }
+  @page { size: Letter; margin: 0.5in; }
+</style>
+</head>
+<body>
+<div class="sheet">
+  <header>
+    <h1>Engineering Verification Certificate</h1>
+    <div class="meta">
+      Certificate <span class="mono">{{ cert_id }}</span> ·
+      Issued {{ cert.issued_at }} ·
+      {{ cert.tool.name }} v{{ cert.tool.version }} ·
+      Overall: <span class="badge {{ dispo_class[cert.overall_disposition] }}">{{ cert.overall_disposition }}</span>
+    </div>
+  </header>
+
+  <h2>Subject</h2>
+  <table class="kv">
+    <tr><td>Part</td><td><strong>{{ part.name }}</strong> (id <span class="mono">{{ part.id }}</span>, rev {{ part.revision }})</td></tr>
+    {% if part.description %}<tr><td>Description</td><td>{{ part.description }}</td></tr>{% endif %}
+    <tr><td>Material</td><td>{{ part.material.name }} (<span class="mono">{{ part.material.id }}</span>)</td></tr>
+    <tr><td>Inputs digest</td><td><span class="mono">SHA-256 {{ cert.inputs_sha256 }}</span></td></tr>
+  </table>
+
+  <h2>Standards cited</h2>
+  <ul>
+    {% for s in cert.standards %}
+    <li><strong>{{ s.title }}</strong> — edition: {{ s.edition }}{% if s.note %}<br><span class="clause">{{ s.note }}</span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+
+  {% if cert.conformance and not cert.conformance.error %}
+  <h2>Engine conformance</h2>
+  <table class="kv">
+    <tr><td>Conformance suite</td><td>{{ cert.conformance.suite }}
+      <span class="mono">({{ cert.conformance.suite_digest[:16] }}…)</span></td></tr>
+    <tr><td>Result at issue</td><td>
+      <span class="badge {{ 'pass' if cert.conformance.engine_conforms else 'fail' }}">
+        {{ cert.conformance.cases_passed }}/{{ cert.conformance.cases_total }}
+        {{ 'CONFORMS' if cert.conformance.engine_conforms else 'DOES NOT CONFORM' }}</span></td></tr>
+    <tr><td>To reproduce</td><td><span class="mono">everify conform run</span> — the suite states,
+      with its own hand calculations, what a correct implementation of these rules must produce.</td></tr>
+  </table>
+  {% endif %}
+
+  <h2>Verification results</h2>
+  {% for r in cert.results %}
+  <div class="checkblock">
+    <div class="checkhead">
+      <h3>{{ r.title }}</h3>
+      <span class="badge {{ dispo_class[r.disposition] }}">{{ r.disposition }}</span>
+    </div>
+    <div class="clause">{{ r.clause.standard }} ({{ r.clause.edition }}), <strong>{{ r.clause.clause }}</strong> — {{ r.clause.title }}
+      {% if r.clause.note %}<br>{{ r.clause.note }}{% endif %}</div>
+    {% if r.clause.quote %}<p class="quote">“{{ r.clause.quote }}”</p>{% endif %}
+    {% if r.formula %}<div class="formula mono">{{ r.formula }}</div>{% endif %}
+    {% if r.substitution %}<div class="formula mono">{{ r.substitution }}</div>{% endif %}
+    {% if r.criterion %}<div>Criterion: <span class="mono">{{ r.criterion }}</span>
+      {% if r.margin is not none %} · Margin: <strong>{{ "%+.4f"|format(r.margin) }}</strong>{% endif %}</div>
+    {% elif r.margin is not none %}<div>Margin: <strong>{{ "%+.4f"|format(r.margin) }}</strong></div>{% endif %}
+    {% if r.message %}<p>{{ r.message }}</p>{% endif %}
+    {% if r.computed %}
+    <div class="tablewrap"><table>
+      <tr><th>Symbol</th><th>Quantity</th><th>Value</th></tr>
+      {% for c in r.computed %}
+      <tr><td class="mono">{{ c.symbol }}</td><td>{{ c.description }}</td><td class="mono">{{ c.value }}</td></tr>
+      {% endfor %}
+    </table></div>
+    {% endif %}
+    {% if r.assumptions %}<div class="clause">Assumptions:</div><ul class="clause">
+      {% for a in r.assumptions %}<li>{{ a }}</li>{% endfor %}</ul>{% endif %}
+    {% for w in r.warnings %}<div class="warnbox">⚠ {{ w }}</div>{% endfor %}
+  </div>
+  {% endfor %}
+
+  <h2>Scope of this certificate</h2>
+  <div class="scope"><strong>Read before relying on this document.</strong><br>{{ cert.scope_statement }}</div>
+
+  <h2>Professional review</h2>
+  <p class="clause">{{ cert.professional_review.statement }}</p>
+  <div class="sig-grid">
+    <div><div class="sig-line"></div><div class="sig-label">Reviewing engineer — name &amp; signature</div></div>
+    <div><div class="sig-line"></div><div class="sig-label">License / registration no. &amp; jurisdiction</div></div>
+    <div><div class="sig-line"></div><div class="sig-label">Date reviewed</div></div>
+    <div><div class="sig-line"></div><div class="sig-label">Disposition / limitations</div></div>
+  </div>
+
+  <h2>Digital signature</h2>
+  <table class="kv">
+    <tr><td>Issuing organization</td><td>{{ cert.issuer.organization }}</td></tr>
+    <tr><td>Algorithm</td><td>{{ cert.signature.algorithm }}</td></tr>
+    <tr><td>Public key fingerprint</td><td><span class="mono">SHA-256 {{ cert.issuer.key_fingerprint }}</span></td></tr>
+    <tr><td>Signature</td><td><span class="mono" style="word-break: break-all;">{{ cert.signature.value }}</span></td></tr>
+    <tr><td>To verify</td><td><span class="mono">everify verify &lt;certificate.json&gt; --pubkey &lt;issuer.pub&gt;</span> — checks the signature, the input digest, and recomputes every result from the embedded inputs.</td></tr>
+  </table>
+
+  <footer>
+    This rendering is a human-readable presentation of the signed JSON certificate; the JSON
+    document is the authoritative artifact. Digital signature attests to integrity and origin
+    of the computation record only.
+  </footer>
+</div>
+</body>
+</html>

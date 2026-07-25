@@ -1,0 +1,16 @@
+# 2:1 ellipsoidal head for the air receiver in air_receiver.yaml.
+id: AR-1001-HEAD
+name: Air receiver — 2:1 ellipsoidal head
+revision: B
+material: SA-516-70
+geometry:
+  type: ellipsoidal_head
+  inside_diameter: 48 inch
+  nominal_thickness: 0.500 inch
+  aspect_ratio: 2.0
+design_conditions:
+  design_pressure: 250 psi
+  design_temperature: 500 degF
+  corrosion_allowance: 0.125 inch
+  joint_efficiency: 1.0   # seamless head
+standards: [asme-viii-div1]

@@ -1,0 +1,62 @@
+id: viii1.identity.hemisphere-equals-sphere
+title: A hemispherical head and a spherical shell of equal radius require equal thickness
+standard: asme-viii-div1
+category: identity
+reference: ASME BPVC Section VIII Div 1, UG-27(d) and UG-32
+rationale: >
+  UG-32's hemispherical head rule and UG-27(d)'s spherical shell rule are the same
+  equation, t = P*L/(2*S*E - 0.2*P), applied to the same geometry. They are reached
+  through different code paths in any implementation, so agreement between them is a
+  genuine cross-check rather than a tautology. Both are evaluated at a 60 in inside
+  diameter, giving t = 250*30/(40000 - 50) = 7500/39950 = 0.1877346683354 in, and a margin
+  of 0.25/0.1877346683354 - 1 = +0.3316666666667 (exactly 0.25*39950/7500 - 1 = 199/600).
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-020
+  name: Conformance spherical shell
+  material: CONF-CS-20KSI
+  geometry:
+    type: spherical_shell
+    inside_diameter: 60 inch
+    nominal_thickness: 0.250 inch
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 500 degF
+    joint_efficiency: 1.0
+  standards: [asme-viii-div1]
+expect:
+  - check_id: viii1.ug27d
+    disposition: PASS
+    margin: 0.3316666666667
+    margin_tolerance: 1.0e-10
+agrees_with:
+  - description: hemispherical head of the same radius (UG-32 path)
+    margin_tolerance: 1.0e-12
+    only_checks: [viii1.mawp, viii1.ug16b, viii1.ug99b]
+    part:
+      id: CONF-VIII1-021
+      name: Conformance hemispherical head
+      material: CONF-CS-20KSI
+      geometry:
+        type: hemispherical_head
+        inside_diameter: 60 inch
+        nominal_thickness: 0.250 inch
+      design_conditions:
+        design_pressure: 250 psi
+        design_temperature: 500 degF
+        joint_efficiency: 1.0
+      standards: [asme-viii-div1]

@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "everify"
+version = "0.1.0"
+description = "Standards-based engineering verification with cryptographically verifiable certificates (ASME BPVC VIII-1, ASME B31.3, FAA 14 CFR Part 25)"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [{ name = "everify contributors" }]
+keywords = [
+  "engineering",
+  "verification",
+  "ASME",
+  "B31.3",
+  "pressure-vessel",
+  "FAA",
+  "14-CFR",
+  "certificate",
+]
+dependencies = [
+  "pydantic>=2.7",
+  "pint>=0.23",
+  "cryptography>=42",
+  "typer>=0.12",
+  "rich>=13.7",
+  "jinja2>=3.1",
+  "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+# ruff is pinned exactly: an unpinned linter changes its default rule set between
+# releases and breaks CI on its own schedule rather than on ours.
+dev = ["pytest>=8", "ruff==0.16.0"]
+
+[project.scripts]
+everify = "everify.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+everify = [
+  "data/materials/*.yaml",
+  "certificates/templates/*.j2",
+  "conformance/suite/**/*.yaml",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Selected explicitly so the rule set is a property of this repository rather
+# than of whichever ruff version happens to be installed.
+select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "RUF"]
+ignore = [
+  # Clause text, verbatim regulatory quotes, and substituted formula strings cannot be
+  # wrapped without corrupting what the engineer reads. line-length above still governs
+  # code layout for anyone running `ruff format`.
+  "E501",
+  # Engineering notation is deliberate: the minus sign, multiplication sign, middle dot,
+  # and radical in formulas ("t = P·R / (S·E − 0.6·P)") are what make certificates read
+  # like the standards they cite. Replacing them with ASCII would degrade the output.
+  "RUF001", "RUF002", "RUF003",
+]
+
+[tool.ruff.lint.flake8-bugbear]
+# typer expresses CLI parameters as function-call defaults; that is the framework's
+# required idiom, not the mutable-default bug B008 exists to catch.
+extend-immutable-calls = ["typer.Option", "typer.Argument"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

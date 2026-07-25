@@ -1,0 +1,48 @@
+id: viii1.heads.golden.torispherical
+title: Torispherical head — required thickness at the L/r = 16-2/3 limit
+standard: asme-viii-div1
+category: golden
+reference: ASME BPVC Section VIII Div 1, Mandatory Appendix 1-4(d)
+rationale: >
+  Hand calculation with the code default knuckle radius r = 0.06*L, giving L/r = 16.6667,
+  the maximum ratio for which the M-factor form applies. No corrosion allowance.
+  L = D = 48 in;  r = 2.88 in;  M = (3 + sqrt(16.666667))/4 = (3 + 4.0824829)/4 = 1.770620726.
+  t = P*L*M/(2*S*E - 0.2*P) = 250*48*1.7706207262/(40000 - 50) = 21247.4487139/39950
+    = 0.5318510316374 in  ->  margin = 0.625/0.5318510316374 - 1 = +0.1751410880520.
+  At this ratio the equation also reduces to the classic t = 0.885*P*L/(S*E - 0.1*P) form,
+  which gives 0.885*250*48/(20000 - 25) = 10620/19975 = 0.531664581 in; the small difference
+  is the rounding embedded in the 0.885 constant, so the M-form is used as the reference.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-003
+  name: Conformance torispherical head
+  material: CONF-CS-20KSI
+  geometry:
+    type: torispherical_head
+    inside_diameter: 48 inch
+    nominal_thickness: 0.625 inch
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 500 degF
+    joint_efficiency: 1.0
+  standards: [asme-viii-div1]
+expect_overall: PASS
+expect:
+  - check_id: viii1.app14d
+    disposition: PASS
+    margin: 0.1751410880520
+    margin_tolerance: 1.0e-10

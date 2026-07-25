@@ -1,0 +1,48 @@
+id: viii1.golden.undersized-fails
+title: An undersized shell must FAIL with the correct negative margin
+standard: asme-viii-div1
+category: golden
+reference: ASME BPVC Section VIII Div 1, UG-27(c)(1)
+rationale: >
+  A verification tool that cannot produce a correct failure is useless. Hand calculation,
+  corroded condition:  R = 60/2 + 0.0625 = 30.0625 in;  t_available = 0.3125 - 0.0625 = 0.25 in;
+  S*E = 17000 psi.  t_required = 250*30.0625/(17000 - 150) = 7515.625/16850 = 0.4460311573 in.
+  Since 0.25 < 0.4460311573 the check must FAIL with
+  margin = 0.25/0.4460311573 - 1 = -0.4395010395, and the run overall must be FAIL.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-040
+  name: Conformance undersized shell
+  material: CONF-CS-20KSI
+  geometry:
+    type: cylindrical_shell
+    inside_diameter: 60 inch
+    nominal_thickness: 0.3125 inch
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 300 degF
+    corrosion_allowance: 0.0625 inch
+    joint_efficiency: 0.85
+  standards: [asme-viii-div1]
+expect_overall: FAIL
+expect:
+  - check_id: viii1.ug27c1
+    disposition: FAIL
+    margin: -0.4395010395010
+    margin_tolerance: 1.0e-10
+  - check_id: viii1.mawp
+    disposition: FAIL
