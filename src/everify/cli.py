@@ -47,6 +47,11 @@ app = typer.Typer(
 )
 console = Console()
 
+from everify.cli_graph import attest_command, graph_app  # noqa: E402
+
+app.add_typer(graph_app, name="graph")
+app.command("attest")(attest_command)
+
 _STYLE = {
     Disposition.PASS: "bold green",
     Disposition.FAIL: "bold red",
