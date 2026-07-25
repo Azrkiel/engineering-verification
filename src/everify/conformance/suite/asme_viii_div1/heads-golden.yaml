@@ -1,0 +1,47 @@
+id: viii1.heads.golden.ellipsoidal
+title: 2:1 ellipsoidal head — required thickness
+standard: asme-viii-div1
+category: golden
+reference: ASME BPVC Section VIII Div 1, Mandatory Appendix 1-4(c)
+rationale: >
+  Hand calculation. For a 2:1 head, D/2h = 2 so K = [2 + 2^2]/6 = 1 exactly, and the
+  Appendix 1-4(c) form reduces to the familiar UG-32 ellipsoidal equation.
+  Corroded inside diameter D = 48 + 2*0.125 = 48.25 in;  t_available = 0.375 in.
+  t = P*D*K/(2*S*E - 0.2*P) = 250*48.25*1/(40000 - 50) = 12062.5/39950 = 0.3019399249061 in
+  -> margin = 0.375/0.3019399249061 - 1 = +0.2419689119171.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-002
+  name: Conformance 2:1 ellipsoidal head
+  material: CONF-CS-20KSI
+  geometry:
+    type: ellipsoidal_head
+    inside_diameter: 48 inch
+    nominal_thickness: 0.500 inch
+    aspect_ratio: 2.0
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 500 degF
+    corrosion_allowance: 0.125 inch
+    joint_efficiency: 1.0
+  standards: [asme-viii-div1]
+expect_overall: PASS
+expect:
+  - check_id: viii1.app14c
+    disposition: PASS
+    margin: 0.2419689119171
+    margin_tolerance: 1.0e-10

@@ -1,0 +1,59 @@
+id: viii1.ug27.golden.cylinder
+title: Cylindrical shell under internal pressure — required thickness and MAWP
+standard: asme-viii-div1
+category: golden
+reference: ASME BPVC Section VIII Div 1, UG-27(c)(1), UG-27(c)(2), UG-98
+rationale: >
+  Hand calculation, corroded condition per UG-25.
+  R = 48/2 + 0.125 = 24.125 in;  t_available = 0.500 - 0.125 = 0.375 in;  S*E = 20000 * 0.85 = 17000 psi.
+  Circumferential, UG-27(c)(1): t = P*R/(S*E - 0.6*P) = 250*24.125/(17000 - 150)
+    = 6031.25/16850 = 0.357937685 in  ->  margin = 0.375/0.357937685 - 1 = +0.047668394.
+  Longitudinal, UG-27(c)(2): t = P*R/(2*S*E + 0.4*P) = 6031.25/(34000 + 100)
+    = 6031.25/34100 = 0.176869501 in  ->  margin = 0.375/0.176869501 - 1 = +1.120207254.
+  MAWP governed by the circumferential case: S*E*t/(R + 0.6*t) = 17000*0.375/(24.125 + 0.225)
+    = 6375/24.35 = 261.8069815195 psi  ->  margin = 261.8069815195/250 - 1 = +0.0472279260780.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-001
+  name: Conformance cylindrical shell
+  material: CONF-CS-20KSI
+  geometry:
+    type: cylindrical_shell
+    inside_diameter: 48 inch
+    nominal_thickness: 0.500 inch
+  design_conditions:
+    design_pressure: 250 psi
+    design_temperature: 500 degF
+    corrosion_allowance: 0.125 inch
+    joint_efficiency: 0.85
+  standards: [asme-viii-div1]
+expect_overall: PASS
+expect:
+  - check_id: viii1.ug27c1
+    disposition: PASS
+    margin: 0.0476683937824
+    margin_tolerance: 1.0e-10
+  - check_id: viii1.ug27c2
+    disposition: PASS
+    margin: 1.1202072538860
+    margin_tolerance: 1.0e-10
+  - check_id: viii1.mawp
+    disposition: PASS
+    margin: 0.0472279260780
+    margin_tolerance: 1.0e-10
+  - check_id: viii1.ug16b
+    disposition: PASS

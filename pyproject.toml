@@ -39,7 +39,11 @@ everify = "everify.cli:app"
 where = ["src"]
 
 [tool.setuptools.package-data]
-everify = ["data/materials/*.yaml", "certificates/templates/*.j2"]
+everify = [
+  "data/materials/*.yaml",
+  "certificates/templates/*.j2",
+  "conformance/suite/**/*.yaml",
+]
 
 [tool.ruff]
 line-length = 100

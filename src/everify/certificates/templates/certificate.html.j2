@@ -85,6 +85,20 @@
     {% endfor %}
   </ul>
 
+  {% if cert.conformance and not cert.conformance.error %}
+  <h2>Engine conformance</h2>
+  <table class="kv">
+    <tr><td>Conformance suite</td><td>{{ cert.conformance.suite }}
+      <span class="mono">({{ cert.conformance.suite_digest[:16] }}…)</span></td></tr>
+    <tr><td>Result at issue</td><td>
+      <span class="badge {{ 'pass' if cert.conformance.engine_conforms else 'fail' }}">
+        {{ cert.conformance.cases_passed }}/{{ cert.conformance.cases_total }}
+        {{ 'CONFORMS' if cert.conformance.engine_conforms else 'DOES NOT CONFORM' }}</span></td></tr>
+    <tr><td>To reproduce</td><td><span class="mono">everify conform run</span> — the suite states,
+      with its own hand calculations, what a correct implementation of these rules must produce.</td></tr>
+  </table>
+  {% endif %}
+
   <h2>Verification results</h2>
   {% for r in cert.results %}
   <div class="checkblock">

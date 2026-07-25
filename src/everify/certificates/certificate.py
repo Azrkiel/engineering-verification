@@ -42,6 +42,30 @@ PROFESSIONAL_REVIEW_STATEMENT = (
 )
 
 
+def _conformance_claim() -> dict:
+    """State which conformance suite this engine satisfies, verified at issue time.
+
+    A certificate that merely asserts results is asking to be trusted. One that
+    names a suite, and records whether this engine passes it, can be challenged
+    by anyone who runs the same suite.
+    """
+    try:
+        from everify.conformance import SUITE_VERSION, load_cases, run_suite, suite_digest
+
+        cases = load_cases()
+        report = run_suite(cases)
+        return {
+            "suite": SUITE_VERSION,
+            "suite_digest": suite_digest(cases),
+            "cases_total": len(report.results),
+            "cases_passed": report.passed,
+            "engine_conforms": report.ok,
+            "note": "Re-run with 'everify conform run' to reproduce this result.",
+        }
+    except Exception as exc:  # never let reporting break issuance
+        return {"error": f"conformance suite could not be evaluated: {exc}"}
+
+
 def build_certificate(run: VerificationRun, keys_dir: str | Path) -> dict:
     private, meta = load_private_key(keys_dir)
     pub_raw = private.public_key().public_bytes(
@@ -62,6 +86,7 @@ def build_certificate(run: VerificationRun, keys_dir: str | Path) -> dict:
         "subject": {"part": part_doc},
         "inputs_sha256": sha256_hex(canonical_bytes(part_doc)),
         "standards": [s.model_dump(mode="json") for s in run.standards],
+        "conformance": _conformance_claim(),
         "results": [r.model_dump(mode="json") for r in run.results],
         "overall_disposition": run.overall_disposition.value,
         "scope_statement": SCOPE_STATEMENT,

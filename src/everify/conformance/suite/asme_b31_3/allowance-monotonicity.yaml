@@ -1,0 +1,57 @@
+id: b313.invariance.allowances-are-additive
+title: Corrosion and mechanical allowances enter the wall requirement identically
+standard: asme-b31-3
+category: identity
+reference: ASME B31.3, para. 304.1.1 (the allowance term c)
+rationale: >
+  Para. 304.1.1 defines c as the sum of the corrosion/erosion allowance and the mechanical
+  allowances (thread and groove depth). The two therefore contribute identically to the
+  required wall, and only their sum can matter. A part declaring 0.0625 in of corrosion
+  allowance must produce exactly the same result as one declaring 0.03125 in of corrosion
+  allowance plus 0.03125 in of mechanical allowance. An implementation that applies one of
+  them with the wrong sign, drops it, or double counts it fails this case.
+materials:
+  CONF-CS-17.1KSI:
+    name: Conformance seamless pipe steel, S = 17.1 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 17.1 ksi
+        - temperature: 500 degF
+          value: 17.1 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-B313-010
+  name: Conformance pipe, corrosion allowance only
+  material: CONF-CS-17.1KSI
+  geometry:
+    type: straight_pipe
+    outside_diameter: 6.625 inch
+    nominal_wall: 0.280 inch
+  design_conditions:
+    design_pressure: 300 psi
+    design_temperature: 400 degF
+    corrosion_allowance: 0.0625 inch
+  standards: [asme-b31-3]
+agrees_with:
+  - description: same total allowance split between corrosion and mechanical
+    margin_tolerance: 1.0e-12
+    part:
+      id: CONF-B313-011
+      name: Conformance pipe, split allowance
+      material: CONF-CS-17.1KSI
+      geometry:
+        type: straight_pipe
+        outside_diameter: 6.625 inch
+        nominal_wall: 0.280 inch
+      design_conditions:
+        design_pressure: 300 psi
+        design_temperature: 400 degF
+        corrosion_allowance: 0.03125 inch
+        mechanical_allowance: 0.03125 inch
+      standards: [asme-b31-3]

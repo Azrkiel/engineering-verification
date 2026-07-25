@@ -1,0 +1,43 @@
+id: viii1.domain.thick-shell-refused
+title: Pressure beyond 0.385·S·E must refuse the thin-shell equation
+standard: asme-viii-div1
+category: domain-guard
+reference: ASME BPVC Section VIII Div 1, UG-27(c)(1) and Mandatory Appendix 1-2
+rationale: >
+  UG-27(c)(1) is valid only for t <= 0.5*R and P <= 0.385*S*E; beyond that the thin-shell
+  assumption breaks down and Mandatory Appendix 1-2 governs. Silently computing anyway is
+  the dangerous failure mode this case exists to prevent: with S*E = 17000 psi the limit
+  is 0.385*17000 = 6545 psi, so a 7000 psi design must be refused, not answered.
+  An implementation that returns PASS here is unsafe.
+materials:
+  CONF-CS-20KSI:
+    name: Conformance carbon steel, S = 20.0 ksi
+    category: pressure
+    allowable_stress:
+      basis: Fixed conformance value; not drawn from any code table.
+      points:
+        - temperature: -20 degF
+          value: 20.0 ksi
+        - temperature: 650 degF
+          value: 20.0 ksi
+    provenance:
+      source: Synthetic conformance material with a flat allowable stress.
+      requires_verification: false
+      verified_by_user: true
+part:
+  id: CONF-VIII1-030
+  name: Conformance shell above the thin-wall pressure limit
+  material: CONF-CS-20KSI
+  geometry:
+    type: cylindrical_shell
+    inside_diameter: 48 inch
+    nominal_thickness: 0.500 inch
+  design_conditions:
+    design_pressure: 7000 psi
+    design_temperature: 500 degF
+    joint_efficiency: 0.85
+  standards: [asme-viii-div1]
+expect:
+  - check_id: viii1.ug27c1
+    disposition: NOT_APPLICABLE
+    message_contains: Appendix 1-2

@@ -11,7 +11,25 @@ everify check part.yaml          # run the checks, see clause-cited results
 everify keygen --org "Acme LLC"  # one-time: create your signing keypair
 everify certify part.yaml        # issue a signed verification certificate (+ printable HTML)
 everify verify part.cert.json    # anyone, offline: signature + digest + full recompute
+
+everify graph add part.yaml      # track the claim in an evidence graph
+everify attest --reviewer "..."  # engineer sign-off, bound to exact inputs
+everify graph status             # what changed, what's stale, whose sign-off just voided
+everify conform run              # prove this engine computes the standards correctly
 ```
+
+Two things here are not calculators, and they are the point:
+
+**Claims that know when they stop being true.** Verification is not a one-time event — the
+CAD changes, the material spec is revised, and yesterday's analysis is quietly wrong. everify
+records every claim in a Merkle DAG bound to the exact digest of every input it consumed, so
+a change anywhere upstream is provable at every claim above it, and an engineer's sign-off
+**voids itself automatically** when the design it covered changes.
+
+**A conformance suite that can fail.** Every certificate names the suite the issuing engine
+satisfies and whether it passed. The suite states, with its own independent hand
+calculations, what a correct implementation must produce — so the tool's correctness is
+something you can challenge rather than something you must take on faith.
 
 ## What this is — and what it is not
 
@@ -101,6 +119,73 @@ result without the recompute flagging it. Pin trust with `--pubkey` against the
 issuer's published key; the rendered HTML (`--html` / `everify render`) is a printable
 presentation of the same record with wet-signature lines for the reviewing engineer.
 
+## The evidence graph
+
+`everify graph` turns one-shot verification into continuous verification.
+
+Adding a part decomposes it into content-addressed nodes — material, geometry, design
+conditions, load cases — and records each check as a **claim node carrying the digest of
+every input it consumed**. Because a node's digest folds in its dependencies' digests,
+staleness is cryptographic rather than bookkeeping: nothing has to remember to invalidate
+anything.
+
+```text
+$ everify graph status
+claim:AR-1001-SHELL:viii1.ug27c1   claim   STALE   material:SA-516-70: 4a475c61… → c6c63d5f…
+
+Attestations
+  VOID Dana Ruiz, P.E. — rev-B-release (5 claims)
+      Δ claim:AR-1001-SHELL:viii1.ug27c1: abbc397f3f05 → 4d8b1eee8ed1
+```
+
+- `everify graph impact material:SA-516-70` — the blast radius *before* you make a change:
+  everything that would be invalidated.
+- `everify attest --reviewer "Dana Ruiz, P.E." --keys keys/` — a sign-off bound to the exact
+  claims reviewed. Change any input they rest on and the attestation reads VOID, naming what
+  moved. There is no way to ship a design carrying a signature that was given for a
+  different design.
+- `everify graph log geometry:AR-1001-SHELL` — every recorded version; objects are immutable,
+  so the full history stays auditable.
+- `everify graph status --json` — machine-readable state for CI. Exits non-zero on stale
+  claims or void attestations, so "is our analysis still valid?" becomes a build check.
+
+**Machine-generated engineering.** Every node records its author (`human`, `ai`, or `tool`),
+so the graph answers a question that matters more each month: *which parts of this design did
+a model write, and has a human actually attested to the claims resting on them?*
+
+```text
+$ everify graph add design.yaml --geometry-author "some-model-v1"
+AI-authored inputs
+  geometry:AR-1001-SHELL (by some-model-v1): 5 dependent claims, 5 without valid human attestation
+```
+
+If the model later revises the design, the human attestation lapses and that exposure
+reopens automatically. everify never claims AI output is trustworthy — it makes the absence
+of human review impossible to lose track of.
+
+## Conformance suite
+
+`everify conform run` executes a versioned corpus stating what a correct implementation of
+these rules must produce, independent of everify's source. Each case carries the hand
+calculation or algebraic identity that justifies it, in one of five categories:
+
+| Category | Asserts |
+|---|---|
+| `golden` | An independently hand-computed value (arithmetic shown in the case file) |
+| `identity` | Two algebraically equivalent formulations agree — e.g. UG-27(d) spherical vs the UG-32 hemispherical path |
+| `invariance` | Transformations that must not change the answer: unit system, geometric scaling |
+| `domain-guard` | Out-of-domain inputs are *refused*, not silently computed — the dangerous failure mode |
+| `degenerate` | Edge inputs (zero pressure) are handled without crashing or emitting infinities |
+
+Cases define their own materials, so they mean the same thing in any implementation. The
+suite has a content digest, and every certificate cites it along with the issuing engine's
+result — a correctness claim anyone can re-run and challenge.
+
+The suite is proven to have teeth: the test battery corrupts real coefficients in a copy of
+the engine (the 0.6 in UG-27's denominator, the 1.5 factor of safety in § 25.303) and asserts
+the suite catches each one. A conformance suite that cannot fail is decoration. Writing these
+cases already caught three arithmetic slips in hand-computed expected values.
+
 ## Material data policy
 
 ASME Section II-D allowable-stress tables are copyrighted and are **not** reproduced.
@@ -136,12 +221,17 @@ caught by recompute) and the full CLI flow.
 
 ## Roadmap
 
+- Integrations that feed the graph: STEP/CAD geometry hashing, FEA result ingestion,
+  requirements import — each one makes staleness detection reach further upstream
 - ASME VIII-1: external pressure (UG-28 — requires licensed chart data), nozzle
   reinforcement (UG-37), MDMT/UCS-66
 - ASME B31.3: sustained/occasional stresses, branch reinforcement, bends/miters
 - 14 CFR: Part 23, casting factors (25.621), bearing factors (25.623)
 - AISC 360 steel member checks; ASME Y14.5 tolerance stack-ups
 - PDF emission; web UI; certificate transparency log
+
+New standards coverage is gated on conformance cases: a rule encoding lands only with
+golden, identity, and domain-guard cases that would fail if it were wrong.
 
 ## License & disclaimer
 
