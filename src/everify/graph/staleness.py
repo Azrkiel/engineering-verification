@@ -8,13 +8,13 @@ longer true, and which sign-offs just became void?*
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 
 from everify.graph.nodes import AuthorKind, Node, NodeType
 from everify.graph.store import GraphStore, NodeNotFoundError
 
 
-class Freshness(str, Enum):
+class Freshness(StrEnum):
     FRESH = "FRESH"
     STALE = "STALE"
     ORPHANED = "ORPHANED"  # a dependency no longer exists in the graph

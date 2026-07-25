@@ -4,8 +4,8 @@ SA-106-B example allowable stress: S = 17.1 ksi through 500 °F.
 """
 
 import pytest
-
 from conftest import by_id
+
 from everify.engine import Disposition, verify_part
 from everify.models import Part
 

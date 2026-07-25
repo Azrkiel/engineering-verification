@@ -2,8 +2,8 @@
 identical dispositions and margins."""
 
 import pytest
-
 from conftest import by_id
+
 from everify.engine import verify_part
 from everify.models import Part
 from everify.units import ureg

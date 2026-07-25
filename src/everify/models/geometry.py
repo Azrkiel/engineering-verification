@@ -7,7 +7,7 @@ inside dimensions grow, thickness shrinks in the corroded condition).
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
@@ -65,21 +65,14 @@ class StraightPipe(EverifyModel):
     )
 
     @model_validator(mode="after")
-    def _wall_fits(self) -> "StraightPipe":
+    def _wall_fits(self) -> StraightPipe:
         if self.nominal_wall * 2 >= self.outside_diameter:
             raise ValueError("nominal_wall must be less than half the outside diameter")
         return self
 
 
 Geometry = Annotated[
-    Union[
-        CylindricalShell,
-        SphericalShell,
-        EllipsoidalHead,
-        TorisphericalHead,
-        HemisphericalHead,
-        StraightPipe,
-    ],
+    CylindricalShell | SphericalShell | EllipsoidalHead | TorisphericalHead | HemisphericalHead | StraightPipe,
     Field(discriminator="type"),
 ]
 

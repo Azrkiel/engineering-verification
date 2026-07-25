@@ -4,8 +4,8 @@
 """
 
 import pytest
-
 from conftest import by_id
+
 from everify.engine import Disposition, verify_part
 from everify.models import Part
 

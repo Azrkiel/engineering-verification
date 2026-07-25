@@ -10,15 +10,15 @@ checks from the embedded inputs — with `everify verify`.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
+from cryptography.hazmat.primitives import serialization
 
 from everify import __version__
 from everify.certificates.canonical import canonical_bytes, sha256_hex
 from everify.certificates.signing import b64, fingerprint, load_private_key, sign
 from everify.engine.results import VerificationRun
-
-from cryptography.hazmat.primitives import serialization
 
 SCHEMA = "everify.certificate/v1"
 
@@ -77,7 +77,7 @@ def build_certificate(run: VerificationRun, keys_dir: str | Path) -> dict:
         "schema": SCHEMA,
         "kind": "engineering-verification-certificate",
         "tool": {"name": "everify", "version": __version__},
-        "issued_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "issued_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "issuer": {
             "organization": meta["organization"],
             "public_key": b64(pub_raw),

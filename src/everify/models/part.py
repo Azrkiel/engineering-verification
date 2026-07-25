@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from pathlib import Path
-from typing import Mapping
 
 import yaml
 from pydantic import Field, model_validator
@@ -35,7 +35,7 @@ class Part(EverifyModel):
     notes: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
-    def _unique_load_case_names(self) -> "Part":
+    def _unique_load_case_names(self) -> Part:
         names = [c.name for c in self.load_cases]
         dupes = {n for n in names if names.count(n) > 1}
         if dupes:
@@ -46,13 +46,13 @@ class Part(EverifyModel):
         return self
 
     @classmethod
-    def from_yaml(cls, path: str | Path) -> "Part":
+    def from_yaml(cls, path: str | Path) -> Part:
         data = yaml.safe_load(Path(path).read_text())
         if not isinstance(data, dict):
             raise ValueError(f"{path}: expected a YAML mapping describing a part")
         return cls.model_validate(data)
 
-    def resolved(self, library: Mapping[str, Material]) -> "Part":
+    def resolved(self, library: Mapping[str, Material]) -> Part:
         """Return a copy with the material reference replaced by the full material record."""
         if isinstance(self.material, Material):
             return self

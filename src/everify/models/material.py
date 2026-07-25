@@ -10,6 +10,7 @@ edition (set `provenance.verified_by_user: true` once you have done so).
 
 from __future__ import annotations
 
+from itertools import pairwise
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -35,12 +36,12 @@ class AllowableStress(EverifyModel):
     points: list[AllowableStressPoint] = Field(min_length=1)
 
     @model_validator(mode="after")
-    def _sorted_unique(self) -> "AllowableStress":
+    def _sorted_unique(self) -> AllowableStress:
         temps = [kelvin(p.temperature) for p in self.points]
         if sorted(temps) != temps:
             self.points = sorted(self.points, key=lambda p: kelvin(p.temperature))
             temps = sorted(temps)
-        for a, b in zip(temps, temps[1:]):
+        for a, b in pairwise(temps):
             if abs(a - b) < 1e-9:
                 raise ValueError("allowable_stress.points contains duplicate temperatures")
         return self
@@ -63,7 +64,7 @@ class AllowableStress(EverifyModel):
         unit = pts[0].value.units
         if tk <= kelvin(pts[0].temperature) + 1e-9:
             return pts[0].value
-        for a, b in zip(pts, pts[1:]):
+        for a, b in pairwise(pts):
             ta, tb = kelvin(a.temperature), kelvin(b.temperature)
             if tk <= tb + 1e-9:
                 f = (tk - ta) / (tb - ta)

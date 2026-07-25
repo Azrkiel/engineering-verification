@@ -6,8 +6,8 @@ calculator. SA-516-70 example allowable stress: S = 20.0 ksi through 500 °F.
 """
 
 import pytest
-
 from conftest import by_id
+
 from everify.engine import Disposition, verify_part
 from everify.models import Part
 

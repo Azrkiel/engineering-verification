@@ -187,16 +187,16 @@ class FarPart25(StandardModule):
             quote=Q25_613B,
             note="Fitting factor text for reference — § 25.625: " + Q25_625,
         )
-        common = dict(
-            check_id=f"far25.basis.{slug}",
-            title=f"Material design-value basis — load case '{case.name}'",
-            clause=clause,
-            criterion="single load path ⇒ A-basis (99%/95%) or S-basis; redundant ⇒ B-basis (90%/95%) acceptable",
-            computed=[
+        common = {
+            "check_id": f"far25.basis.{slug}",
+            "title": f"Material design-value basis — load case '{case.name}'",
+            "clause": clause,
+            "criterion": "single load path ⇒ A-basis (99%/95%) or S-basis; redundant ⇒ B-basis (90%/95%) acceptable",
+            "computed": [
                 ComputedValue(symbol="basis", description="declared statistical basis of design values", value=dv.basis or "unstated"),
                 ComputedValue(symbol="load_path", description="declared load path for this case", value=case.load_path),
             ],
-        )
+        }
         if dv.basis is None:
             return CheckResult(
                 **common,

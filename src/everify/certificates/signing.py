@@ -10,7 +10,7 @@ from __future__ import annotations
 import base64
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from cryptography.exceptions import InvalidSignature
@@ -68,7 +68,7 @@ def generate_keys(out_dir: str | Path, organization: str) -> dict:
         "organization": organization,
         "key_fingerprint": fingerprint(pub_raw),
         "algorithm": "Ed25519",
-        "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
     }
     (out / META_NAME).write_text(json.dumps(meta, indent=2) + "\n")
     return meta

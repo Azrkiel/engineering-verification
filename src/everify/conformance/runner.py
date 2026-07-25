@@ -9,10 +9,10 @@ claim of correctness.
 from __future__ import annotations
 
 import math
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from importlib import resources
 from pathlib import Path
-from typing import Iterable
 
 import yaml
 

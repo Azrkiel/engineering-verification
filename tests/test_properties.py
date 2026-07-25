@@ -15,10 +15,11 @@ exact mathematical identities rather than single hand-picked numbers:
 
 import math
 import random
+from typing import ClassVar
 
 import pytest
-
 from conftest import by_id
+
 from everify.engine import Disposition, verify_part
 from everify.models import Part
 from everify.units import Quantity, parse_quantity, ureg
@@ -42,7 +43,7 @@ def make_part(geometry, conditions, standards=("asme-viii-div1",), material="SA-
 class TestOdFormIdentities:
     """UG-27 ID-form vs Mandatory Appendix 1-1 OD-form, swept over a grid."""
 
-    GRID = [
+    GRID: ClassVar[list[tuple[float, float, float, float]]] = [
         (P, R, S, E)
         for P in (15.0, 150.0, 600.0)      # psi
         for R in (6.0, 24.0, 120.0)        # inch
@@ -176,10 +177,14 @@ class TestForwardInverseClosure:
 
 
 class TestInvariances:
-    BASE_GEOM = {"type": "cylindrical_shell", "inside_diameter": "48 inch",
-                 "nominal_thickness": "0.5 inch"}
-    BASE_COND = {"design_pressure": "250 psi", "design_temperature": "100 degF",
-                 "corrosion_allowance": "0.125 inch", "joint_efficiency": 0.85}
+    BASE_GEOM: ClassVar[dict[str, str]] = {
+        "type": "cylindrical_shell", "inside_diameter": "48 inch",
+        "nominal_thickness": "0.5 inch",
+    }
+    BASE_COND: ClassVar[dict[str, object]] = {
+        "design_pressure": "250 psi", "design_temperature": "100 degF",
+        "corrosion_allowance": "0.125 inch", "joint_efficiency": 0.85,
+    }
     SCALE_FREE = ("viii1.ug27c1", "viii1.ug27c2", "viii1.mawp")
 
     def _margins(self, library, geom, cond, keys):

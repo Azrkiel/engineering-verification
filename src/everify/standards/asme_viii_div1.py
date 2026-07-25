@@ -123,11 +123,15 @@ class AsmeViiiDiv1(StandardModule):
         except AllowableStressRangeError as exc:
             return [self._error(str(exc))]
         dc = part.design_conditions
-        if part.geometry is not None and hasattr(part.geometry, "nominal_thickness"):
-            if part.geometry.nominal_thickness - dc.corrosion_allowance <= 0 * dc.corrosion_allowance:
-                return [self._error(
-                    "no thickness remains after corrosion allowance; increase nominal thickness"
-                )]
+        if (
+            part.geometry is not None
+            and hasattr(part.geometry, "nominal_thickness")
+            and part.geometry.nominal_thickness - dc.corrosion_allowance
+            <= 0 * dc.corrosion_allowance
+        ):
+            return [self._error(
+                "no thickness remains after corrosion allowance; increase nominal thickness"
+            )]
         return []
 
     def _context(self, part: Part) -> _Ctx:

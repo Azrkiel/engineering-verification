@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 import yaml
@@ -79,7 +78,7 @@ def _load_run(part_file: Path, standard: list[str], materials_dir: list[Path]) -
         return verify_part(part, load_material_library(materials_dir))
     except USER_ERRORS as exc:
         _die(str(exc))
-        raise AssertionError("unreachable")
+        raise AssertionError("unreachable") from None
 
 
 def _load_part(part_file: Path, standard: list[str] | None) -> Part:
@@ -144,7 +143,7 @@ def standards() -> None:
 
 @app.command()
 def materials(
-    spec: Optional[str] = typer.Argument(None, help="Material id to show in detail"),
+    spec: str | None = typer.Argument(None, help="Material id to show in detail"),
     materials_dir: list[Path] = typer.Option(
         [], "--materials", help="Extra directories of material YAML records (shadow bundled data)"
     ),
@@ -211,8 +210,8 @@ def keygen(
 def certify(
     part_file: Path = typer.Argument(..., exists=True, readable=True),
     keys: Path = typer.Option(Path("keys"), "--keys", help="Directory containing the org keypair"),
-    out: Optional[Path] = typer.Option(None, "--out", "-o", help="Certificate JSON path"),
-    html: Optional[Path] = typer.Option(None, "--html", help="Also render printable HTML here"),
+    out: Path | None = typer.Option(None, "--out", "-o", help="Certificate JSON path"),
+    html: Path | None = typer.Option(None, "--html", help="Also render printable HTML here"),
     standard: list[str] = typer.Option([], "--standard", "-s"),
     materials_dir: list[Path] = typer.Option([], "--materials"),
 ) -> None:
@@ -226,7 +225,7 @@ def certify(
             f"signing keys not found in {keys}/ — generate them once with: "
             f"everify keygen --org \"Your Organization\" --out {keys}"
         )
-        raise AssertionError("unreachable")
+        raise AssertionError("unreachable") from None
     out = out or part_file.with_suffix(".cert.json")
     out.write_text(json.dumps(cert, indent=2, ensure_ascii=False) + "\n")
     console.print(f"Certificate [cyan]{certificate_id(cert)}[/cyan] written to {out}")
@@ -249,10 +248,10 @@ def certify(
 @app.command()
 def verify(
     cert_file: Path = typer.Argument(..., exists=True, readable=True),
-    pubkey: Optional[Path] = typer.Option(
+    pubkey: Path | None = typer.Option(
         None, "--pubkey", help="Trusted issuer public key (PEM) to pin against"
     ),
-    fingerprint: Optional[str] = typer.Option(
+    fingerprint: str | None = typer.Option(
         None, "--fingerprint",
         help="Trusted issuer key fingerprint (≥16 hex chars of the SHA-256) to pin against",
     ),
@@ -296,7 +295,7 @@ def verify(
 @app.command()
 def render(
     cert_file: Path = typer.Argument(..., exists=True, readable=True),
-    out: Optional[Path] = typer.Option(None, "--out", "-o"),
+    out: Path | None = typer.Option(None, "--out", "-o"),
 ) -> None:
     """Render a certificate JSON document to printable HTML."""
     cert = json.loads(cert_file.read_text())

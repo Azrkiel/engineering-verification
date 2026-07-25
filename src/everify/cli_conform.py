@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -23,7 +22,7 @@ _STATUS_STYLE = {"PASS": "bold green", "FAIL": "bold red", "ERROR": "bold red"}
 
 @conform_app.command("list")
 def conform_list(
-    standard: Optional[str] = typer.Option(None, "--standard", "-s"),
+    standard: str | None = typer.Option(None, "--standard", "-s"),
     suite_dir: list[Path] = typer.Option([], "--suite", help="Additional suite directories"),
 ) -> None:
     """List conformance cases and what each one asserts."""
@@ -42,8 +41,8 @@ def conform_list(
 
 @conform_app.command("run")
 def conform_run(
-    standard: Optional[str] = typer.Option(None, "--standard", "-s"),
-    category: Optional[Category] = typer.Option(None, "--category", "-c"),
+    standard: str | None = typer.Option(None, "--standard", "-s"),
+    category: Category | None = typer.Option(None, "--category", "-c"),
     suite_dir: list[Path] = typer.Option([], "--suite"),
     json_out: bool = typer.Option(False, "--json"),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Show each case's rationale"),

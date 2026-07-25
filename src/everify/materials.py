@@ -8,9 +8,9 @@ directory of YAML records (same schema) to use your licensed data.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from importlib import resources
 from pathlib import Path
-from typing import Iterable
 
 import yaml
 

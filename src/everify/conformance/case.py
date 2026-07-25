@@ -21,7 +21,7 @@ Categories:
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import Field, model_validator
@@ -29,7 +29,7 @@ from pydantic import Field, model_validator
 from everify.models.base import EverifyModel
 
 
-class Category(str, Enum):
+class Category(StrEnum):
     GOLDEN = "golden"
     IDENTITY = "identity"
     INVARIANCE = "invariance"
@@ -54,7 +54,7 @@ class ExpectedCheck(EverifyModel):
     message_contains: str | None = None
 
     @model_validator(mode="after")
-    def _something_asserted(self) -> "ExpectedCheck":
+    def _something_asserted(self) -> ExpectedCheck:
         if (self.disposition is None and self.margin is None
                 and not self.margin_is_none and self.message_contains is None):
             raise ValueError(f"expected check {self.check_id!r} asserts nothing")
@@ -100,7 +100,7 @@ class ConformanceCase(EverifyModel):
     )
 
     @model_validator(mode="after")
-    def _asserts_something(self) -> "ConformanceCase":
+    def _asserts_something(self) -> ConformanceCase:
         if not self.expect and not self.agrees_with and self.expect_overall is None:
             raise ValueError(f"case {self.id!r} asserts nothing")
         return self

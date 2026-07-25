@@ -16,8 +16,8 @@ invalidation logic to get wrong and no way for a change to go unnoticed.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
 from pydantic import Field
@@ -26,7 +26,7 @@ from everify.certificates.canonical import canonical_bytes, sha256_hex
 from everify.models.base import EverifyModel
 
 
-class NodeType(str, Enum):
+class NodeType(StrEnum):
     REQUIREMENT = "requirement"
     MATERIAL = "material"
     GEOMETRY = "geometry"
@@ -38,7 +38,7 @@ class NodeType(str, Enum):
     ATTESTATION = "attestation"
 
 
-class AuthorKind(str, Enum):
+class AuthorKind(StrEnum):
     HUMAN = "human"
     AI = "ai"
     TOOL = "tool"
@@ -57,7 +57,7 @@ class Author(EverifyModel):
     note: str | None = None
 
     @classmethod
-    def tool(cls, name: str = "everify") -> "Author":
+    def tool(cls, name: str = "everify") -> Author:
         return cls(kind=AuthorKind.TOOL, id=name)
 
 
@@ -77,7 +77,7 @@ class Node(EverifyModel):
     dependencies: list[Dependency] = Field(default_factory=list)
     author: Author = Field(default_factory=Author.tool)
     created_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(UTC).isoformat(timespec="seconds")
     )
     label: str | None = None
 

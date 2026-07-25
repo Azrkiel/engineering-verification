@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import Field, computed_field
 
@@ -22,7 +22,7 @@ def capacity_margin(capacity: Quantity, demand: Quantity) -> float | None:
     return float((capacity / demand).to("dimensionless").magnitude) - 1.0
 
 
-class Disposition(str, Enum):
+class Disposition(StrEnum):
     PASS = "PASS"
     FAIL = "FAIL"
     WARN = "WARN"

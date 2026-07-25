@@ -39,7 +39,7 @@ class DesignConditions(EverifyModel):
     )
 
     @model_validator(mode="after")
-    def _nonnegative(self) -> "DesignConditions":
+    def _nonnegative(self) -> DesignConditions:
         if self.design_pressure.magnitude < 0:
             raise ValueError("design_pressure must be non-negative (gage)")
         for name in ("corrosion_allowance", "mechanical_allowance"):
@@ -73,7 +73,7 @@ class LoadCase(EverifyModel):
     )
 
     @model_validator(mode="after")
-    def _positive_stress(self) -> "LoadCase":
+    def _positive_stress(self) -> LoadCase:
         if self.limit_stress.magnitude <= 0:
             raise ValueError("limit_stress must be positive (tension); compression checks are out of scope in v1")
         return self

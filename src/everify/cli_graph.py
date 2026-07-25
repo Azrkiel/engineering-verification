@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -60,7 +59,7 @@ def graph_add(
     root: Path = typer.Option(Path("."), "--root"),
     author: str = typer.Option("everify", "--author", help="Who authored these inputs"),
     author_kind: AuthorKind = typer.Option(AuthorKind.TOOL, "--author-kind"),
-    geometry_author: Optional[str] = typer.Option(
+    geometry_author: str | None = typer.Option(
         None, "--geometry-author",
         help="Mark geometry as authored by someone/something else (e.g. an AI model id)",
     ),
@@ -264,9 +263,9 @@ def attest_command(
     reviewer: str = typer.Option(..., "--reviewer", help="Name of the reviewing engineer"),
     scope: str = typer.Option("review", "--scope", help="Short label for this sign-off"),
     root: Path = typer.Option(Path("."), "--root"),
-    keys: Optional[Path] = typer.Option(None, "--keys", help="Sign the attestation with this keypair"),
-    license_number: Optional[str] = typer.Option(None, "--license"),
-    jurisdiction: Optional[str] = typer.Option(None, "--jurisdiction"),
+    keys: Path | None = typer.Option(None, "--keys", help="Sign the attestation with this keypair"),
+    license_number: str | None = typer.Option(None, "--license"),
+    jurisdiction: str | None = typer.Option(None, "--jurisdiction"),
 ) -> None:
     """Record a reviewing engineer's sign-off over current claims.
 
